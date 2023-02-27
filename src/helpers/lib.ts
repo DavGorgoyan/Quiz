@@ -37,12 +37,6 @@ export type TError = {
 }
 
 
-export interface JSONFormatter {
-  questions:{
-    id:number | string,
-    question:string,
-    answer:string[],
-    result:boolean
-  }[],
-  
-}
+export type TDictionary = {
+  [key: string]: any
+};

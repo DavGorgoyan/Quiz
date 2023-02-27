@@ -1,7 +1,7 @@
-import { TRoute } from './lib';
+import { TRoute } from './helpers/lib';
 import express,{ Application, NextFunction, Request, Response } from "express";
 import cors from "cors";
-import apiRouter from "./routes";
+import apiRouter from "./routes/index";
 
 const app:Application = express();
 
