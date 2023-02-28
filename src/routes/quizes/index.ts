@@ -4,10 +4,11 @@ import { createQuiz,
          updateQuiz,
         removeQuiz } from './../../controllers/quizes/index';
 import { Router } from "express";
+import { validate } from '../../middlewares';
 
 const router = Router();
 
-router.post("",createQuiz);
+router.post("",validate("quizes"),createQuiz);
 router.get("/:id",getQuiz);
 router.get("",getAllTheQuizes);
 router.put("/:id",updateQuiz);

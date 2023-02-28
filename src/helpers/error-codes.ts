@@ -13,7 +13,7 @@ export const _OLD_PASSWORD_IS_WRONG_:TError = { code: 4063, message: `Old passwo
 export const _USER_DOES_NOT_HAVE_ACCESS_:TError = { code: 4032, message: `Օգտատերը իրավունք չունի`, status: 403 };
 export const _CANT_SEND_MAIL_:TError = { code: 1444 , message: `Նամակը հաջողությամբ չի ուղարկվել`, status: 500 }; 
 export const _TECHNICAL_DIFFICULTIES_:TError = { code: 5000, message: `Technical Difficulties`, status: 500 };
-
+export const _INVALID_CORRECT_ANSWERS:TError = { code:5000, message: `Դաշտը պետք է պարունակի միայն/առնվազն մեկ ճիշտ պատասխան`, status: 500 }
 
 
 export const internal_errors: TError[] =  [

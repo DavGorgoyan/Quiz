@@ -1,3 +1,5 @@
+import { validate } from './../../middlewares/index';
+import { answer_validation } from '../../middlewares/answer_validation';
 import { addQuestion, 
          deleteQuestion,
          updateQuestion,
@@ -5,9 +7,10 @@ import { addQuestion,
 import { Router } from "express";
 
 
+
 const router = Router();
 
-router.post("",addQuestion);
+router.post("",validate("current_question"),answer_validation(),addQuestion);
 router.delete("/:id",deleteQuestion);
 router.put("/:id",updateQuestion)
 
