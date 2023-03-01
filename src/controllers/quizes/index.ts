@@ -24,8 +24,16 @@ export const createQuiz:RequestHandler = async(req,res) => {
 export const getQuiz:RequestHandler = async(req,res) => {
     const result = getResponseTemplate();
     try {
-        const data = await operations.getOne("quizes",req.params.id);
-        result.data = data;
+        const query = "SELECT a.id,a.question_id,a.content,a.isCorrect, q.content AS question FROM answers a " +
+                      "LEFT JOIN questions q ON a.question_id = q.id " +
+                      "ORDER BY question_id;"
+        const quizData = await operations.getOne("quizes",req.params.id);
+        const content = await operations.exec(query);
+        result.data = {
+            "quiz_title":quizData.title,
+            "questions": content
+        }        
+        
     }catch (err:any) {
         console.log(err);
         result.meta.error = {
@@ -40,8 +48,12 @@ export const getQuiz:RequestHandler = async(req,res) => {
 export const getAllTheQuizes:RequestHandler = async(req,res) => {
     const result = getResponseTemplate();
     try {        
-        const data = await operations.select("quizes","*");
-        result.data = data;
+        const { page = 1, rowsPerPage = 10 } = req.query;
+        const query =
+            "SELECT * FROM quizes " +
+            "LIMIT ?,?"
+        const paginated = await operations.exec(query, [(+page - 1) * +rowsPerPage, +rowsPerPage])
+        result.data = paginated;
         
     } catch (err:any) {
         console.log(err);

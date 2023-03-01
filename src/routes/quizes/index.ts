@@ -10,7 +10,7 @@ const router = Router();
 
 router.post("",validate("quizes"),createQuiz);
 router.get("/:id",getQuiz);
-router.get("",getAllTheQuizes);
+router.get("/all/quizes",getAllTheQuizes);
 router.put("/:id",updateQuiz);
 router.delete("/:id",removeQuiz);
 
