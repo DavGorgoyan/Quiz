@@ -1,13 +1,22 @@
+import { PrismaClient } from '@prisma/client';
 import { getResponseTemplate } from "../../helpers/lib";
 import { RequestHandler } from "express";
 import  operations from "../../providers/db/operations"
+const prisma = new PrismaClient();
 
 
 export const createQuiz:RequestHandler = async(req,res) => {
     const result = getResponseTemplate();
     try {
-        const resultingData = await operations.insert('quizes',req.body);
-        result.data = resultingData;
+        const resultingData = await prisma.quizes.create({
+            data:{
+                title:`${req.body.title}`
+            }
+        })
+        result.data = {
+            insertID:resultingData.id,
+            messsage:"Տվյալներն ավելացվեցին հաջողությամբ"
+        }
         
     }catch (err:any) {
         console.log(err);
@@ -24,16 +33,35 @@ export const createQuiz:RequestHandler = async(req,res) => {
 export const getQuiz:RequestHandler = async(req,res) => {
     const result = getResponseTemplate();
     try {
-        const query = "SELECT a.id,a.question_id,a.content,a.isCorrect, q.content AS question FROM answers a " +
-                      "LEFT JOIN questions q ON a.question_id = q.id " +
-                      "ORDER BY question_id;"
-        const quizData = await operations.getOne("quizes",req.params.id);
-        const content = await operations.exec(query);
-        result.data = {
-            "quiz_title":quizData.title,
-            "questions": content
-        }        
+
+        const resultingData = await prisma.quizes.findFirst({
+            select:{
+                id:true,
+                title:true,
+                questions:{
+                    select:{
+                        content:true,
+                        id:true,
+                        answers:{
+                            select:{
+                                content:true,
+                                isCorrect:true,
+                                id:true
+                            }
+                        }
+                    }
+                }
+            },
+            where:{
+                id: +req.params.id
+            }
+        })
         
+        result.data = {
+            "quiz_title":resultingData?.title,
+            "questoin_content":resultingData?.questions
+        }
+
     }catch (err:any) {
         console.log(err);
         result.meta.error = {
@@ -48,12 +76,14 @@ export const getQuiz:RequestHandler = async(req,res) => {
 export const getAllTheQuizes:RequestHandler = async(req,res) => {
     const result = getResponseTemplate();
     try {        
-        const { page = 1, rowsPerPage = 10 } = req.query;
-        const query =
-            "SELECT * FROM quizes " +
-            "LIMIT ?,?"
-        const paginated = await operations.exec(query, [(+page - 1) * +rowsPerPage, +rowsPerPage])
-        result.data = paginated;
+        let { page = 1,rowsPerPage = 10 }= req.query
+        let skip = (+page - 1) * +rowsPerPage;
+        const resultingData = await prisma.quizes.findMany({
+            take:+rowsPerPage,
+            skip
+        })
+
+        result.data = resultingData;
         
     } catch (err:any) {
         console.log(err);
@@ -65,6 +95,7 @@ export const getAllTheQuizes:RequestHandler = async(req,res) => {
     }
     res.status(result.meta.status).json(result);  
 }
+
 
 export const updateQuiz:RequestHandler = async(req,res) => {
     const result = getResponseTemplate();

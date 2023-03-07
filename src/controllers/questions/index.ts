@@ -1,22 +1,37 @@
+import { PrismaClient } from '@prisma/client';
 import { RequestHandler } from 'express';
 import { getResponseTemplate } from "../../helpers/lib";
 import operations from "../../providers/db/operations";
-
+const prisma = new PrismaClient();
 
 export const addQuestion:RequestHandler = async(req,res) => {
     const result = getResponseTemplate();
     try {
-        const insertionResult = await operations.insert("questions",{ "content":req.body.content, quiz_id:req.query.quiz_id });
-        let answersIsnertionIDs = [];
-        for (let i = 0; i < req.body.answers.length; i++) {
-            let answersIsnertionResult = await operations.insert("answers",{ ...req.body.answers[i], "question_id":insertionResult.insertId })
-            answersIsnertionIDs.push(answersIsnertionResult.insertId);
-        }
-
+        const resultingData = await prisma.questions.create({
+            data:{
+                quiz_id:+req.params.quiz_id,
+                content:req.body.content,
+                answers:{
+                    createMany:{
+                        data:req.body.answers
+                    }
+                }
+            }
+        })
+        let answerIDs = await prisma.answers.findMany({
+            select:{
+                id:true
+            },
+            where:{
+                question_id:resultingData.id
+            }
+        });
+        let mapedIDs = answerIDs.map((bum => bum.id));
+        
         result.data = {
-            answerIDS:answersIsnertionIDs,
-            questionID:insertionResult.insertId,
-            message:"Տվյալներն ավելացվեցին հաջողությամբ"
+            message:"Տվյալներն ավելացվեցին հաջողությամբ",
+            questionID:resultingData.id,
+            answerIDs:mapedIDs
         }
 
     } catch (err:any) {
@@ -33,8 +48,14 @@ export const addQuestion:RequestHandler = async(req,res) => {
 export const deleteQuestion:RequestHandler = async(req,res,next) => {
     const result = getResponseTemplate();
     try {
-        const questionDeletion = await operations.remove("questions",{"id":req.params.id });
-        result.data = questionDeletion;
+        await prisma.questions.delete({
+            where:{
+                id: +req.params.id
+            }
+        })
+        result.data = {
+            message:"Տվյալները ջնջվեցին հաջողությամբ"
+        }
 
     }catch (err:any) {
         console.log(err);
@@ -47,21 +68,55 @@ export const deleteQuestion:RequestHandler = async(req,res,next) => {
     res.status(result.meta.status).json(result);
 }
 
+//to fix
 export const updateQuestion:RequestHandler = async(req,res) => {
     const result = getResponseTemplate();
     try {
         if(req.body.content){
-            await operations.update("questions",{ "content":req.body.content },{ "id":req.params.id });
+            await prisma.questions.update({
+                data:{
+                    content:req.body.content
+                },
+                where:{
+                    id:+req.params.id
+                }
+            })
         }
-        
-        if(req.body.answers){
-            for(let i = 0; i < req.body.answers.length; ++i) {
-                await operations.update("answers",req.body.answers[i],{ "question_id":req.params.id ,"id":req.body.answers[i].id })
+        let curr = req.body.answers
+        if(curr){
+            for (let i = 0; i < curr.length; i++) {
+                console.log(111);
+                
+                if(curr[i].isCorrect){
+                    console.log(1);
+                    
+                    await prisma.answers.update({
+                        data:{
+                            isCorrect:curr[i].isCorrect
+                        },
+                        where:{
+                            id:curr[i].id
+                        }
+                    })
+                    if(curr[i].content){
+                        console.log(2);
+                        
+                        await prisma.answers.update({
+                            data:{
+                                content:curr[i].content
+                            },
+                            where:{
+                                id:curr[i].id
+                            }
+                        })
+                }
             }
         }
+    }
+    
         result.data = "Տվյալները փոփոխվեցին հաջողությամբ";
         
-    }  catch (err:any) {
+    } catch (err:any) {
         console.log(err);
         result.meta.error = {
             code: err.code || err.errCode || 5000,

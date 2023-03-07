@@ -10,7 +10,7 @@ import { Router } from "express";
 
 const router = Router();
 
-router.post("",validate("current_question"),answer_validation(),addQuestion);
+router.post("/:quiz_id",validate("current_question"),answer_validation(),addQuestion);
 router.delete("/:id",deleteQuestion);
 router.put("/:id",updateQuestion)
 
