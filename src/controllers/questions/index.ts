@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { RequestHandler } from 'express';
 import { getResponseTemplate } from "../../helpers/lib";
-import operations from "../../providers/db/operations";
 const prisma = new PrismaClient();
 
 export const addQuestion:RequestHandler = async(req,res) => {
@@ -68,7 +67,6 @@ export const deleteQuestion:RequestHandler = async(req,res,next) => {
     res.status(result.meta.status).json(result);
 }
 
-//to fix
 export const updateQuestion:RequestHandler = async(req,res) => {
     const result = getResponseTemplate();
     try {
@@ -85,8 +83,7 @@ export const updateQuestion:RequestHandler = async(req,res) => {
         let curr = req.body.answers
         if(curr){
             for (let i = 0; i < curr.length; i++) {
-                console.log(111);
-                
+         
                 if(curr[i].isCorrect){
                     console.log(1);
                     
@@ -98,7 +95,8 @@ export const updateQuestion:RequestHandler = async(req,res) => {
                             id:curr[i].id
                         }
                     })
-                    if(curr[i].content){
+                }
+                if(curr[i].content){
                         console.log(2);
                         
                         await prisma.answers.update({
@@ -110,7 +108,6 @@ export const updateQuestion:RequestHandler = async(req,res) => {
                             }
                         })
                 }
-            }
         }
     }
     
@@ -120,7 +117,7 @@ export const updateQuestion:RequestHandler = async(req,res) => {
         console.log(err);
         result.meta.error = {
             code: err.code || err.errCode || 5000,
-            message: err.message || err.errMessage || "Unknown Error"
+            message: err.meta || err.message || err.errMessage || "Unknown Error"
         };
         result.meta.status = err.status || err.statusCode || 500;
     }
@@ -131,8 +128,18 @@ export const updateQuestion:RequestHandler = async(req,res) => {
 export const checkAnswer:RequestHandler = async (req,res) => {
     const result = getResponseTemplate();
     try {
-       const [data] = await operations.select("answers",["isCorrect"],{"id":req.params.id})
-       result.data = data.isCorrect;
+        const resultingData = await prisma.answers.findFirst({
+            select:{
+                isCorrect:true
+            },
+            where:{
+                id:+req.params.id
+            }
+        })
+
+       result.data = {
+                resultingData
+                }
         
     } catch (err:any) {
         console.log(err);

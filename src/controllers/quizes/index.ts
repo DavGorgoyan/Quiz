@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { getResponseTemplate } from "../../helpers/lib";
 import { RequestHandler } from "express";
-import  operations from "../../providers/db/operations"
 const prisma = new PrismaClient();
 
 
@@ -96,18 +95,27 @@ export const getAllTheQuizes:RequestHandler = async(req,res) => {
     res.status(result.meta.status).json(result);  
 }
 
-
 export const updateQuiz:RequestHandler = async(req,res) => {
     const result = getResponseTemplate();
     try {
-        const data = await operations.update("quizes",req.body,{"id":req.params.id});
-        result.data = data;
+        const resultingData = await prisma.quizes.update({
+            data:{
+                title: req.body.title
+            },
+            where:{
+                id:+req.params.id
+            }
+        })
+
+        result.data = {
+            resultingData
+        }
         
     }catch (err:any) {
         console.log(err);
         result.meta.error = {
             code: err.code || err.errCode || 5000,
-            message: err.message || err.errMessage || "Unknown Error"
+            message: err.meta || err.message || err.errMessage || "Unknown Error"
         };
         result.meta.status = err.status || err.statusCode || 500;
     }
@@ -117,8 +125,15 @@ export const updateQuiz:RequestHandler = async(req,res) => {
 export const removeQuiz:RequestHandler = async(req,res) => {
     const result = getResponseTemplate();
     try {
-        const data = await operations.remove("quizes",{"id":req.params.id});
-        result.data = data;
+        await prisma.quizes.delete({
+            where:{
+                id: +req.params.id
+            }
+        })
+
+        result.data = {
+            message:"Տվյալները ջնջվեցին հաջողությամբ"
+        }
 
     } catch (err:any) {
         console.log(err);
